@@ -16,10 +16,10 @@ POST http://localhost:5000/users/
 Content-Type: application/json
 
 {
-  "name": "Ahmad Fikri Haikal",
-  "email": "haikal2@gmail.com",
-  "password": "haikal1234",
-  "confPassword" : "haikal1234"
+  "name": "Admin",
+  "email": "admin@gmail.com",
+  "password": "admin123",
+  "confPassword" : "admin123"
 }
 
 ###
@@ -50,15 +50,11 @@ DELETE http://localhost:5000/logout
 GET http://localhost:5000/token
 
 ###
-PATCH  http://localhost:5000/users/1
+PATCH  http://localhost:5000/users/5
 Content-Type: application/json
 
 {
-  "firstName": "Ahmad",
-  "lastName": "Fikri Haikal",
-  "email": "fikaalm26@gmail.com",
-  "password": "Fikaalm26123",
-  "reppass": "Fikaalm26123"
+  "name": "Fikal"
 }
 ###
 PATCH  http://localhost:5000/products/1
