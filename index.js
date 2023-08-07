@@ -40,4 +40,4 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(UserRoute);
 app.use(ProductRoute);
-app.listen(5000, () => console.log("Server up and running..."));
+app.listen(process.env.PORT, () => console.log("Server up and running..."));
