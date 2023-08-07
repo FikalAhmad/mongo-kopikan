@@ -8,7 +8,7 @@ import {
   Logout,
 } from "../controller/UserController.js";
 import { verifyToken } from "../middleware/VerifyToken.js";
-import { refreshToken } from "../controller/refreshToken.js";
+import { refreshToken } from "../controller/RefreshToken.js";
 
 const router = express.Router();
 
