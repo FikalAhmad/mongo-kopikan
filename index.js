@@ -14,23 +14,23 @@ try {
   console.log(error);
 }
 
-const allowedOrigins = ["https://kopikan.vercel.app/"];
-// Enable CORS middleware with custom options
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Check if the request's origin is in the allowedOrigins array
-      if (allowedOrigins.includes(origin) || !origin) {
-        callback(null, true); // Allow the request
-      } else {
-        callback(new Error("Not allowed by CORS")); // Deny the request
-      }
-    },
-  })
-);
+// const allowedOrigins = ["https://kopikan.vercel.app/"];
+// // Enable CORS middleware with custom options
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // Check if the request's origin is in the allowedOrigins array
+//       if (allowedOrigins.includes(origin) || !origin) {
+//         callback(null, true); // Allow the request
+//       } else {
+//         callback(new Error("Not allowed by CORS")); // Deny the request
+//       }
+//     },
+//   })
+// );
 
 app.use(cookieParser());
-// app.use(cors({ credentials: true }));
+app.use(cors({ credentials: true }));
 app.use(express.json());
 app.use(UserRoute);
 app.use(ProductRoute);
