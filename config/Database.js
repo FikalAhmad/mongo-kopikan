@@ -1,8 +1,14 @@
-import { Sequelize } from "sequelize";
+import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
+dotenv.config();
 
-const db = new Sequelize("kopikan_db", "root", "", {
-  host: "localhost",
-  dialect: "mysql",
-});
-
+const connectionString = process.env.MONGO_CONNECT_URI;
+const client = new MongoClient(connectionString);
+let conn;
+try {
+  conn = await client.connect();
+} catch (e) {
+  console.error(e);
+}
+let db = conn.db("KOPIKAN");
 export default db;

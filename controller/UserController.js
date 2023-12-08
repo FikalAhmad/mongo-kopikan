@@ -1,11 +1,12 @@
-import User from "../models/UserModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import db from "../config/Database.js";
+import { ObjectId } from "mongodb";
 
 export const getUsers = async (req, res) => {
   try {
-    const response = await User.findAll();
-    res.status(200).json(response);
+    let users = await db.collection("users").find({}).toArray();
+    res.status(200).json(users);
   } catch (error) {
     console.log(error.message);
   }
@@ -13,21 +14,11 @@ export const getUsers = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const response = await User.findOne({
-      where: {
-        id: req.params.id,
-      },
-    });
-    res.status(200).json(response);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const createUser = async (req, res) => {
-  try {
-    await User.create(req.body);
-    res.status(201).json({ msg: "User Created" });
+    let user = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(req.params.id) });
+    if (!user) res.send("Not Found").status(404);
+    else res.status(200).json(user);
   } catch (error) {
     console.log(error.message);
   }
@@ -35,25 +26,16 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    await User.update(req.body, {
-      where: {
-        id: req.params.id,
+    const updates = {
+      $set: req.body,
+    };
+    let user = await db.collection("users").updateOne(
+      {
+        _id: new ObjectId(req.params.id),
       },
-    });
-    res.status(200).json({ msg: "User Updated" });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const deleteUser = async (req, res) => {
-  try {
-    await User.destroy({
-      where: {
-        id: req.params.id,
-      },
-    });
-    res.status(200).json({ msg: "User Deleted" });
+      updates
+    );
+    res.send(user).status(200);
   } catch (error) {
     console.log(error.message);
   }
@@ -67,30 +49,31 @@ export const Register = async (req, res) => {
       .json({ msg: "Password dan Confirm Password tidak cocok" });
   const salt = await bcrypt.genSalt();
   const hashPassword = await bcrypt.hash(password, salt);
-  try {
-    await User.create({
-      name: name,
-      email: email,
-      password: hashPassword,
-    });
-    res.json({ msg: "Register Berhasil" });
-  } catch (error) {
-    console.log(error);
-  }
+  await db.collection("users").insertOne({
+    _id: new ObjectId(),
+    fullname: name,
+    email: email,
+    password: hashPassword,
+    refresh_token: null,
+  });
+  res.json({ msg: "Register Berhasil" });
 };
 
 export const Login = async (req, res) => {
   try {
-    const user = await User.findAll({
-      where: {
-        email: req.body.email,
-      },
+    const user = await db.collection("users").findOne({
+      email: req.body.email,
     });
-    const match = await bcrypt.compare(req.body.password, user[0].password);
-    if (!match) return res.status(400).json({ msg: "Wrong Password" });
-    const userId = user[0].id;
-    const name = user[0].name;
-    const email = user[0].email;
+    if (!user) {
+      return res.status(400).json({ msg: "Email not found" });
+    }
+    const match = await bcrypt.compare(req.body.password, user.password);
+    if (!match) {
+      return res.status(400).json({ msg: "Wrong Password" });
+    }
+    const userId = user._id;
+    const name = user.name;
+    const email = user.email;
     const accessToken = jwt.sign(
       { userId, name, email },
       process.env.ACCESS_TOKEN_SECRET,
@@ -105,43 +88,36 @@ export const Login = async (req, res) => {
         expiresIn: "1d",
       }
     );
-    await User.update(
-      { refresh_token: refreshToken },
-      {
-        where: {
-          id: userId,
-        },
-      }
-    );
+    await db
+      .collection("users")
+      .updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { refresh_token: refreshToken } }
+      );
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      // secure: true
+      maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+      // secure: true // Uncomment if using HTTPS
     });
     res.json({ accessToken });
   } catch (error) {
-    res.status(404).json({ msg: "Email tidak ditemukan" });
+    // Handle any errors that occur during the process
+    console.error(error);
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 
 export const Logout = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) return res.sendStatus(204);
-  const user = await User.findAll({
-    where: {
-      refresh_token: refreshToken,
-    },
-  });
+  const user = await db
+    .collection("users")
+    .findOne({ refresh_token: refreshToken });
   if (!user[0]) return res.sendStatus(204);
-  const userId = user[0].id;
-  await User.update(
-    { refresh_token: null },
-    {
-      where: {
-        id: userId,
-      },
-    }
-  );
+  const userId = user[0]._id;
+  await db
+    .collection("users")
+    .updateOne({ _id: ObjectId(userId) }, { $set: { refresh_token: null } });
   res.clearCookie("refreshToken");
   return res.sendStatus(200);
 };
