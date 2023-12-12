@@ -51,7 +51,7 @@ export const Register = async (req, res) => {
   const hashPassword = await bcrypt.hash(password, salt);
   await db.collection("users").insertOne({
     _id: new ObjectId(),
-    fullname: name,
+    name: name,
     email: email,
     password: hashPassword,
     refresh_token: null,
