@@ -30,7 +30,16 @@ try {
 // );
 
 app.use(cookieParser());
-app.use(cors({ credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 app.use(UserRoute);
 app.use(ProductRoute);
