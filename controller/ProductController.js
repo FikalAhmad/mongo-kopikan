@@ -40,15 +40,13 @@ export const createProduct = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
   try {
-    const updates = {
-      $set: req.body,
-    };
-    await db.collection("products").updateOne(
-      {
-        _id: new ObjectId(req.params.id),
-      },
-      updates
-    );
+    const updates = { ...req.body };
+    delete updates._id;
+
+    await db
+      .collection("products")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: updates });
+
     res.status(200).json({ msg: "Product Updated" });
   } catch (error) {
     console.log(error.message);
